@@ -109,7 +109,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14
         type: 'PowerShell'
         name: 'Run SQL Server 2022 ISO Download Script'
         inline: [
-          '& "C:\\installers\\DownloadSQLServer.ps1" -SQLServerISOUri "${storageAccount.properties.primaryEndpoints.blob}${scriptContainerName}/${sqlServerISOFileName}${containerSASToken}"'
+          '& "C:\\installers\\DownloadSQLServer.ps1" -SQLServerISOUri "${storageAccount.properties.primaryEndpoints.blob}${scriptContainerName}/${sqlServerISOFileName}${startsWith(containerSASToken,'?') ? containerSASToken : '?${containerSASToken}'}"'
         ]
       } 
       {
