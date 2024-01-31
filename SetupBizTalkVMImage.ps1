@@ -70,7 +70,7 @@ else {
 # For VM Image Builder to distribute images, the service must be allowed to inject the images into resource groups.
 # To grant the required permissions, create a user-assigned managed identity, and grant it rights on the resource group where the image is built.
 Write-Information "Check if role definition for Azure Builder Image exists already exists..."
-$imageRoleDefinitionName = "Azure Image Builder Service Image Creation Role"
+$imageRoleDefinitionName = "Azure Image Builder Service Image Creation Role-SubId-$SubscriptionID"
 # check if role definition already exists
 $roleDef = Get-AzRoleDefinition -Name $imageRoleDefinitionName -ErrorAction SilentlyContinue
 if ($null -ne $roleDef) {
@@ -85,6 +85,7 @@ else {
     # Download the configuration
     Invoke-WebRequest -Uri $aibRoleImageCreationUrl -OutFile $aibRoleImageCreationPath -UseBasicParsing
     ((Get-Content -path $aibRoleImageCreationPath -Raw) -replace ', you should delete or split out as appropriate', '') | Set-Content -Path $aibRoleImageCreationPath
+    ((Get-Content -path $aibRoleImageCreationPath -Raw) -replace 'Azure Image Builder Service Image Creation Role', $imageRoleDefinitionName) | Set-Content -Path $aibRoleImageCreationPath
     # the template sets the assignable scope to the resource group. Widen it to the subscription as it may be used in other resource groups
     ((Get-Content -path $aibRoleImageCreationPath -Raw) -replace '/resourceGroups/<rgName>', '') | Set-Content -Path $aibRoleImageCreationPath
     ((Get-Content -path $aibRoleImageCreationPath -Raw) -replace '<subscriptionID>', $SubscriptionID) | Set-Content -Path $aibRoleImageCreationPath
@@ -120,7 +121,7 @@ else {
 
     Write-Information "Setting role assignements"
     New-AzRoleAssignment -ObjectId $identityNamePrincipalId -RoleDefinitionName "Storage Blob Data Reader" -Scope $scope
-    if ($null -ne $UserObjectId) {
+    if ([string]::IsNullOrWhiteSpace($UserObjectId) -eq $FALSE) {
         # give the one running the script owner
         New-AzRoleAssignment -ObjectId $UserObjectId -RoleDefinitionName "Storage Blob Data Owner" -Scope $scope
     }
@@ -133,7 +134,7 @@ Read-Host -Prompt "Upload the provisioning scripts AND any other assets (SQL Ser
 $startTime = Get-Date
 $endTime = $startTime.AddHours(1)
 $containerSASToken = New-AzStorageContainerSASToken -Name $containerName -Context $storageAccount.Context -Permission r -StartTime $startTime -ExpiryTime $endTime
-if ($null -eq $containerSASToken) {
+if ([string]::IsNullOrWhiteSpace($containerSASToken) -eq $TRUE) {
 	Write-Error "Failed to acquire SASToken, please check the storage account."
 	exit
 }
@@ -144,7 +145,7 @@ Write-Information "Provisioning resources..."
 $deployment = New-AzResourceGroupDeployment -Name "BizTalkVMImageDeployment" `
                               -ResourceGroupName $ResourceGroupName `
                               -TemplateFile "$FilesDirectory\biztalkvmimage.bicep" `
-                              -TemplateParameterFile "$FilesDirectory\biztalkvmimage.bicepparam" `
+                              -TemplateParameterFile "$FilesDirectory\biztalkvmimage.parameters.json" `
                               -userIdentityName $identity.Name `
                               -storageAccountName $storageAccount.StorageAccountName `
                               -containerSASToken $containerSASTokenSecure `
