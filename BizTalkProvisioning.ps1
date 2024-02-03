@@ -39,6 +39,31 @@ function Install-VSCode-Windows {
     Write-Host "Installation file removed"
 }
 
+function Install-Dotnet6 {
+    $Destination = "$installersPath\dotnet-sdk-6.0.418-win-x64.exe"
+    $Url = "https://download.visualstudio.microsoft.com/download/pr/9b8baa92-04f4-4b1a-8ccd-aa6bf31592bc/3a25c73326e060e04c119264ba58d0d5/dotnet-sdk-6.0.418-win-x64.exe"
+    $UnattendedArgs = '/install /quiet /norestart'
+
+    # Download Dotnet 8 SDK installer
+    Write-Host "Downloading Dotnet 8"
+    Invoke-WebRequest -Uri $Url -OutFile $Destination
+    Write-Host "Download finished"
+
+    # Install Dotnet 8 SDK
+    Write-Host "Installing Dotnet 8"
+    Start-Process -FilePath $Destination -ArgumentList $UnattendedArgs -Wait -Passthru
+    Write-Host "Installation finished"
+
+    # Remove installer
+    Write-Host "Removing installation file"
+    Remove-Item $Destination
+    Write-Host "Installation file removed"
+}
+
+function Install-NugetFee {
+    dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
+}
+
 function Install-Dotnet8 {
     $Destination = "$installersPath\dotnet-sdk-8.0.101-win-x64.exe"
     $Url = "https://download.visualstudio.microsoft.com/download/pr/cb56b18a-e2a6-4f24-be1d-fc4f023c9cc8/be3822e20b990cf180bb94ea8fbc42fe/dotnet-sdk-8.0.101-win-x64.exe"
@@ -184,5 +209,7 @@ Install-BizTalk
 Install-Git
 Install-VSCode-Windows
 Install-Dotnet8
+Install-Dotnet6
+Install-NugetFee
 Install-AzureCLI
 Install-VSStudio
