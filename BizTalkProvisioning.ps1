@@ -128,6 +128,48 @@ function Install-VSStudio {
     Write-Host "Installation file removed"
 }
 
+function Install-FunctionRuntime {
+    $Url = "https://github.com/Azure/azure-functions-core-tools/releases/download/4.0.5455/func-cli-4.0.5455-x64.msi"            
+    $Destination = "$env:TEMP\func-cli-4.0.5455-x64.msi"
+
+    Write-Host "Downloading Function Runtime"
+    # Download the Azure Functions Core Tools installer
+    Invoke-WebRequest -Uri $Url -OutFile $Destination
+    Write-Host "Download finished"
+
+    Write-Host "Installing Function Runtime"
+    # Install Azure Functions Core Tools silently
+    Start-Process -FilePath "msiexec.exe" -ArgumentList "/i $Destination /qn" -Wait
+    Write-Host "Installation finished"
+
+    # Remove the installer
+    Remove-Item $Destination    
+
+}
+
+function Install-SqlServerManagement {
+
+    $Destination = "$installersPath\SSMS-Setup-ENU.exe"
+    $Url = "https://aka.ms/ssmsfullsetup"
+    $install_path = "`"C:\Program Files (x86)\Microsoft SQL Server Management Studio 19`""
+    $UnattendedArgs = " /Install /Passive SSMSInstallRoot=$install_path"
+
+    # Download Azure CLI installer
+    Write-Host "Downloading Install SqlServer Management Studio"
+    Invoke-WebRequest -Uri $Url -OutFile $Destination
+    Write-Host "Download finished"
+
+    # Install Dotnet 8 SDK
+    Write-Host "Installing SqlServer Management Studio"
+    Start-Process -FilePath $Destination -ArgumentList $UnattendedArgs -Wait
+    Write-Host "Installation finished"
+
+    # Remove installer
+    Write-Host "Removing installation file"
+    Remove-Item $Destination
+    Write-Host "Installation file removed"
+}
+
 function Install-SQLServer {
     $ISOFile = "$installersPath\SQLServer2022-x64-ENU-Dev.iso"
 
@@ -210,6 +252,7 @@ Install-Git
 Install-VSCode-Windows
 Install-Dotnet8
 Install-Dotnet6
-Install-NugetFee
 Install-AzureCLI
 Install-VSStudio
+Install-SqlServerManagement
+Install-FunctionRuntime
