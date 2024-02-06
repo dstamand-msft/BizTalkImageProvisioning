@@ -3,13 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
       "galleryName": {
-        "value": "galbiztalk"
+        "value": "galbiztalkhugo"
       },
       "imageGalleryName": {
-        "value": "biztalkdemolab"
+        "value": "biztalkdemolabhugo"
       },
       "imageTemplateName": {
-        "value": "it-biztalkdemo"
+        "value": "it-biztalkdemohugo"
       },
       "sqlServerISOFileName": {
         "value": "SQLServer2022-x64-ENU-Dev.iso"

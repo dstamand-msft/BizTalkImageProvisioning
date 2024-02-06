@@ -39,6 +39,31 @@ function Install-VSCode-Windows {
     Write-Host "Installation file removed"
 }
 
+function Install-Dotnet6 {
+    $Destination = "$installersPath\dotnet-sdk-6.0.418-win-x64.exe"
+    $Url = "https://download.visualstudio.microsoft.com/download/pr/9b8baa92-04f4-4b1a-8ccd-aa6bf31592bc/3a25c73326e060e04c119264ba58d0d5/dotnet-sdk-6.0.418-win-x64.exe"
+    $UnattendedArgs = '/install /quiet /norestart'
+
+    # Download Dotnet 8 SDK installer
+    Write-Host "Downloading Dotnet 8"
+    Invoke-WebRequest -Uri $Url -OutFile $Destination
+    Write-Host "Download finished"
+
+    # Install Dotnet 8 SDK
+    Write-Host "Installing Dotnet 8"
+    Start-Process -FilePath $Destination -ArgumentList $UnattendedArgs -Wait -Passthru
+    Write-Host "Installation finished"
+
+    # Remove installer
+    Write-Host "Removing installation file"
+    Remove-Item $Destination
+    Write-Host "Installation file removed"
+}
+
+function Install-NugetFee {
+    dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
+}
+
 function Install-Dotnet8 {
     $Destination = "$installersPath\dotnet-sdk-8.0.101-win-x64.exe"
     $Url = "https://download.visualstudio.microsoft.com/download/pr/cb56b18a-e2a6-4f24-be1d-fc4f023c9cc8/be3822e20b990cf180bb94ea8fbc42fe/dotnet-sdk-8.0.101-win-x64.exe"
@@ -95,6 +120,48 @@ function Install-VSStudio {
 
     # Install Dotnet 8 SDK
     Write-Host "Installing VS Studio Community Edition"
+    Start-Process -FilePath $Destination -ArgumentList $UnattendedArgs -Wait
+    Write-Host "Installation finished"
+
+    # Remove installer
+    Write-Host "Removing installation file"
+    Remove-Item $Destination
+    Write-Host "Installation file removed"
+}
+
+function Install-FunctionRuntime {
+    $Url = "https://github.com/Azure/azure-functions-core-tools/releases/download/4.0.5455/func-cli-4.0.5455-x64.msi"            
+    $Destination = "$env:TEMP\func-cli-4.0.5455-x64.msi"
+
+    Write-Host "Downloading Function Runtime"
+    # Download the Azure Functions Core Tools installer
+    Invoke-WebRequest -Uri $Url -OutFile $Destination
+    Write-Host "Download finished"
+
+    Write-Host "Installing Function Runtime"
+    # Install Azure Functions Core Tools silently
+    Start-Process -FilePath "msiexec.exe" -ArgumentList "/i $Destination /qn" -Wait
+    Write-Host "Installation finished"
+
+    # Remove the installer
+    Remove-Item $Destination    
+
+}
+
+function Install-SqlServerManagement {
+
+    $Destination = "$installersPath\SSMS-Setup-ENU.exe"
+    $Url = "https://aka.ms/ssmsfullsetup"
+    $install_path = "`"C:\Program Files (x86)\Microsoft SQL Server Management Studio 19`""
+    $UnattendedArgs = " /Install /Passive SSMSInstallRoot=$install_path"
+
+    # Download Azure CLI installer
+    Write-Host "Downloading Install SqlServer Management Studio"
+    Invoke-WebRequest -Uri $Url -OutFile $Destination
+    Write-Host "Download finished"
+
+    # Install Dotnet 8 SDK
+    Write-Host "Installing SqlServer Management Studio"
     Start-Process -FilePath $Destination -ArgumentList $UnattendedArgs -Wait
     Write-Host "Installation finished"
 
@@ -185,5 +252,8 @@ Install-BizTalk
 Install-Git
 Install-VSCode-Windows
 Install-Dotnet8
+Install-Dotnet6
 Install-AzureCLI
 Install-VSStudio
+Install-SqlServerManagement
+Install-FunctionRuntime
