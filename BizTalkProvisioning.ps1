@@ -110,9 +110,10 @@ function Install-VSStudio {
     $Destination = "$installersPath\vs_community.exe"
     $Url = "https://aka.ms/vs/16/release/vs_community.exe"
     # see https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=vs-2022
-    # also see https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-community?view=vs-2022&preserve-view=true for component IDs
-    $UnattendedArgs = "--quiet --norestart --installWhileDownloading --add Microsoft.VisualStudio.Workload.ManagedDesktop --includeRecommended --addProductLang Fr-fr"
-
+    #$UnattendedArgs = "--quiet --norestart --installWhileDownloading"
+    $UnattendedArgs = "--quiet --norestart --installWhileDownloading -addProductLang Fr-fr"
+    #$UnattendedArgs = "--quiet --norestart --installWhileDownloading --addProductLang Fr-fr"
+  
     # Download Azure CLI installer
     Write-Host "Downloading VS Studio Community Edition"
     Invoke-WebRequest -Uri $Url -OutFile $Destination
