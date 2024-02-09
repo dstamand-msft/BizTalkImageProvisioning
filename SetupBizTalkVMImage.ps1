@@ -1,3 +1,4 @@
+#Requires -Modules Az.ImageBuilder
 [CmdletBinding()]
 Param(
     [Parameter(Mandatory=$true)]
@@ -42,6 +43,17 @@ if ($null -eq $SubscriptionId) {
 #     Register-AzProviderPreviewFeature -Name SIGSharing -ProviderNamespace Microsoft.Compute
 #     Write-Information "SIGSharing preview feature enabled"
 # }
+
+
+$requiresRegistration = @("Microsoft.KeyVault", "Microsoft.Storage", "Microsoft.Compute", "Microsoft.VirtualMachineImages")
+foreach ($provider in $requiresRegistration) {
+    $registeredProvider = Get-AzResourceProvider -ProviderNamespace $provider -ErrorAction SilentlyContinue
+    if ($null -eq $registeredProvider) {
+        Write-Warning "Provider $provider not registered, registering..."
+        Register-AzResourceProvider -ProviderNamespace $provider
+        Write-Information "Provider $provider registered"
+    }
+}
 
 # Check if resource group exists and create it if not
 $resourceGroup = Get-AzResourceGroup -Name $ResourceGroupName -ErrorAction SilentlyContinue
@@ -95,10 +107,14 @@ else {
     Write-Information "Role definition created"
 }
 
+Write-Host "Waiting for the role definition to be available..."
+Start-Sleep -Seconds 30
+
 # Check if role assignment already exists
 $roleAssignment = Get-AzRoleAssignment -ObjectId $identityNamePrincipalId -RoleDefinitionName $imageRoleDefinitionName -Scope "/subscriptions/$SubscriptionID/resourceGroups/$ResourceGroupName" -ErrorAction SilentlyContinue
 if ($null -ne $roleAssignment) {
-    Write-Warning "User Identity Role assignment already exists, skipping creation"
+    Write-Warning "User Identity Role assignment already exists => $($roleAssignment.RoleAssignmentId), skipping creation"
+    Write-Warning "If you are experiencing issues, please check the role assignment and set it up manually using the cmdlet New-AzRoleAssignment -ObjectId $identityNamePrincipalId -RoleDefinitionName $imageRoleDefinitionName -Scope `"/subscriptions/$SubscriptionID/resourceGroups/$ResourceGroupName`""
 }
 else {
     # Grant the role definition to the VM Image Builder service principal
@@ -119,11 +135,27 @@ else {
     $storageAccount = New-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName -Location $Location -SkuName Standard_LRS -Kind StorageV2 -EnableHttpsTrafficOnly $true
     New-AzStorageContainer -Name $containerName -Context $storageAccount.Context
 
+    Write-Host "Waiting for the storage to be available..."
+    Start-Sleep -Seconds 30
+
     Write-Information "Setting role assignements"
     New-AzRoleAssignment -ObjectId $identityNamePrincipalId -RoleDefinitionName "Storage Blob Data Reader" -Scope $scope
     if ([string]::IsNullOrWhiteSpace($UserObjectId) -eq $FALSE) {
         # give the one running the script owner
         New-AzRoleAssignment -ObjectId $UserObjectId -RoleDefinitionName "Storage Blob Data Owner" -Scope $scope
+    }
+
+    $roleAssignment = Get-AzRoleAssignment -ObjectId $identityNamePrincipalId -RoleDefinitionName "Storage Blob Data Reader" -Scope $scope -ErrorAction SilentlyContinue
+    $count = 1;
+    while ($null -eq $roleAssignment) {
+        if ($count -gt 5) {
+            Write-Error "Failed to set role assignement 'Storage Blob Data Reader' to $identityNamePrincipalId on $scope, please check the storage account and set it up manually using the cmdlet New-AzRoleAssignment -ObjectId $identityNamePrincipalId -RoleDefinitionName `"Storage Blob Data Reader`" -Scope $scope"
+            exit
+        }
+        Write-Warning "Role assignment not found, retrying in 30 seconds..."
+        Start-Sleep -Seconds 30
+        $roleAssignment = Get-AzRoleAssignment -ObjectId $identityNamePrincipalId -RoleDefinitionName "Storage Blob Data Reader" -Scope $scope -ErrorAction SilentlyContinue
+        $count = $count + 1
     }
 
     Write-Information "Storage account created and role assignments set"
