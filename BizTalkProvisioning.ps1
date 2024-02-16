@@ -111,7 +111,7 @@ function Install-VSStudio {
     $Url = "https://aka.ms/vs/16/release/vs_community.exe"
     # see https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=vs-2022
     #$UnattendedArgs = "--quiet --norestart --installWhileDownloading"
-    $UnattendedArgs = "--quiet --norestart --installWhileDownloading -addProductLang Fr-fr"
+    $UnattendedArgs = "--quiet --norestart --installWhileDownloading --addProductLang Fr-fr"
     #$UnattendedArgs = "--quiet --norestart --installWhileDownloading --addProductLang Fr-fr"
   
     # Download Azure CLI installer
