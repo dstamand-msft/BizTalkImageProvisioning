@@ -105,10 +105,10 @@ else {
     # Create a role definition
     New-AzRoleDefinition -InputFile $aibRoleImageCreationPath
     Write-Information "Role definition created"
+	
+	Write-Host "Waiting for the role definition to be available..."
+	Start-Sleep -Seconds 30
 }
-
-Write-Host "Waiting for the role definition to be available..."
-Start-Sleep -Seconds 30
 
 # Check if role assignment already exists
 $roleAssignment = Get-AzRoleAssignment -ObjectId $identityNamePrincipalId -RoleDefinitionName $imageRoleDefinitionName -Scope "/subscriptions/$SubscriptionID/resourceGroups/$ResourceGroupName" -ErrorAction SilentlyContinue
